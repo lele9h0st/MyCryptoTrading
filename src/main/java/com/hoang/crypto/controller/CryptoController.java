@@ -1,13 +1,16 @@
 package com.hoang.crypto.controller;
 
 import com.hoang.crypto.entity.PriceAggregate;
+import com.hoang.crypto.entity.Transaction;
+import com.hoang.crypto.exception.InvalidInputException;
 import com.hoang.crypto.service.PriceService;
+import com.hoang.crypto.service.TradingService;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.math.BigDecimal;
 
 @RestController
 @RequestMapping("/api/crypto")
@@ -15,7 +18,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class CryptoController {
 
     private final PriceService priceService;
-
+    private final TradingService tradingService;
     @GetMapping("/price/latest")
     public ResponseEntity<PriceAggregate> getLatestPrice(@RequestParam String pair) {
         PriceAggregate price = priceService.getLatestPrice(pair);
@@ -25,4 +28,25 @@ public class CryptoController {
         return ResponseEntity.ok(price);
     }
 
+    @PostMapping("/trade")
+    public ResponseEntity<Transaction> executeTrade(@RequestBody TradeRequest request) {
+        try {
+            Transaction transaction = tradingService.executeTrade(
+                    request.getUserId(),
+                    request.getPair(),
+                    request.getType(),
+                    request.getAmount());
+            return ResponseEntity.ok(transaction);
+        } catch (Exception e) {
+            throw new InvalidInputException(e.getMessage());
+        }
+    }
+
+    @Data
+    static class TradeRequest {
+        private Long userId;
+        private String pair;
+        private String type; // BUY, SELL
+        private BigDecimal amount;
+    }
 }
