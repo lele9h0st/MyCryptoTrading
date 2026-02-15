@@ -1,5 +1,6 @@
 package com.hoang.crypto.service;
 
+import com.hoang.crypto.constant.CryptoPair;
 import com.hoang.crypto.entity.PriceAggregate;
 import com.hoang.crypto.repository.PriceAggregateRepository;
 import lombok.Data;
@@ -10,10 +11,7 @@ import org.springframework.web.client.RestClient;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -27,7 +25,7 @@ public class PriceService {
     private static final String BINANCE_URL = "https://api.binance.com/api/v3/ticker/bookTicker";
     private static final String HUOBI_URL = "https://api.huobi.pro/market/tickers";
 
-    private static final List<String> SUPPORTED_PAIRS = Arrays.asList("ETHUSDT", "BTCUSDT");
+    private static final List<CryptoPair> SUPPORTED_PAIRS = Arrays.asList(CryptoPair.ETHUSDT, CryptoPair.BTCUSDT);
 
     public PriceService(PriceAggregateRepository priceAggregateRepository, RestClient.Builder restClientBuilder) {
         this.priceAggregateRepository = priceAggregateRepository;
@@ -49,8 +47,9 @@ public class PriceService {
                         return new HashMap<>();
                     }
 
+                    List<String> supportedStr = SUPPORTED_PAIRS.stream().map(Enum::name).toList();
                     return Arrays.stream(tickers)
-                            .filter(t -> SUPPORTED_PAIRS.contains(t.getSymbol()))
+                            .filter(t -> supportedStr.contains(t.getSymbol()))
                             .collect(Collectors.toMap(BinanceTicker::getSymbol, t -> t));
                 } catch (Exception e) {
                     log.error("Error fetching from Binance", e);
@@ -68,8 +67,9 @@ public class PriceService {
                     if (response == null || response.getData() == null)
                         return Map.of();
 
+                    List<String> supportedStr = SUPPORTED_PAIRS.stream().map(Enum::name).toList();
                     return response.getData().stream()
-                            .filter(t -> SUPPORTED_PAIRS.contains(t.getSymbol().toUpperCase()))
+                            .filter(t -> supportedStr.contains(t.getSymbol().toUpperCase()))
                             .collect(Collectors.toMap(t -> t.getSymbol().toUpperCase(), t -> t));
                 } catch (Exception e) {
                     log.error("Error fetching from Huobi", e);
@@ -84,13 +84,15 @@ public class PriceService {
 
             LocalDateTime now = LocalDateTime.now();
 
-            for (String pair : SUPPORTED_PAIRS) {
+            for (CryptoPair pair : SUPPORTED_PAIRS) {
                 BigDecimal bestBid = BigDecimal.ZERO;
                 BigDecimal bestAsk = BigDecimal.valueOf(Double.MAX_VALUE);
 
+                String pairStr = pair.name();
+
                 // Check Binance
-                if (binanceMap.containsKey(pair)) {
-                    BinanceTicker b = binanceMap.get(pair);
+                if (binanceMap.containsKey(pairStr)) {
+                    BinanceTicker b = binanceMap.get(pairStr);
                     if (b.getBidPrice() != null)
                         bestBid = b.getBidPrice().max(bestBid);
                     if (b.getAskPrice() != null)
@@ -98,8 +100,8 @@ public class PriceService {
                 }
 
                 // Check Huobi
-                if (huobiMap.containsKey(pair)) {
-                    HuobiTicker h = huobiMap.get(pair);
+                if (huobiMap.containsKey(pairStr)) {
+                    HuobiTicker h = huobiMap.get(pairStr);
                     if (h.getBid() != null)
                         bestBid = h.getBid().max(bestBid);
                     if (h.getAsk() != null)
@@ -114,7 +116,7 @@ public class PriceService {
                     priceAggregate.setAsk(bestAsk);
                     priceAggregate.setTimestamp(now);
                     priceAggregateRepository.save(priceAggregate);
-//                    log.info("Saved price for {}: Bid={}, Ask={}", pair, bestBid, bestAsk);
+                    // log.info("Saved price for {}: Bid={}, Ask={}", pair, bestBid, bestAsk);
                 }
             }
 
@@ -123,8 +125,8 @@ public class PriceService {
         }
     }
 
-    public PriceAggregate getLatestPrice(String pair) {
-        return priceAggregateRepository.findLatestByPair(pair);
+    public PriceAggregate getLatestPrice(CryptoPair pair) {
+        return priceAggregateRepository.findFirstByPairOrderByTimestampDesc(pair);
     }
 
     @Data

@@ -1,5 +1,6 @@
 package com.hoang.crypto.entity;
 
+import com.hoang.crypto.constant.CryptoPair;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
@@ -12,7 +13,8 @@ public class PriceAggregate {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String pair; // ETHUSDT, BTCUSDT
+    @Enumerated(EnumType.STRING)
+    private CryptoPair pair; // ETHUSDT, BTCUSDT
     private BigDecimal bid;
     private BigDecimal ask;
     private LocalDateTime timestamp;

@@ -1,5 +1,6 @@
 package com.hoang.crypto.entity;
 
+import com.hoang.crypto.constant.Currency;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
@@ -15,6 +16,7 @@ public class Wallet {
     @JoinColumn(name = "user_id")
     private User user;
 
-    private String currency; // USDT, ETH, BTC
+    @Enumerated(EnumType.STRING)
+    private Currency currency; // USDT, ETH, BTC
     private BigDecimal balance;
 }

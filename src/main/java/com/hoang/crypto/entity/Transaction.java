@@ -1,5 +1,6 @@
 package com.hoang.crypto.entity;
 
+import com.hoang.crypto.constant.CryptoPair;
 import jakarta.persistence.*;
 import lombok.Data;
 import java.math.BigDecimal;
@@ -17,7 +18,9 @@ public class Transaction {
     private User user;
 
     private String type; // BUY, SELL
-    private String pair; // ETHUSDT, BTCUSDT
+
+    @Enumerated(EnumType.STRING)
+    private CryptoPair pair; // ETHUSDT, BTCUSDT
     private BigDecimal price;
     private BigDecimal amount;
     private LocalDateTime timestamp;
