@@ -91,15 +91,19 @@ public class PriceService {
                 // Check Binance
                 if (binanceMap.containsKey(pair)) {
                     BinanceTicker b = binanceMap.get(pair);
-                    bestBid = b.getBidPrice().max(bestBid);
-                    bestAsk = b.getAskPrice().min(bestAsk);
+                    if (b.getBidPrice() != null)
+                        bestBid = b.getBidPrice().max(bestBid);
+                    if (b.getAskPrice() != null)
+                        bestAsk = b.getAskPrice().min(bestAsk);
                 }
 
                 // Check Huobi
                 if (huobiMap.containsKey(pair)) {
                     HuobiTicker h = huobiMap.get(pair);
-                    bestBid = h.getBid().max(bestBid);
-                    bestAsk = h.getAsk().min(bestAsk);
+                    if (h.getBid() != null)
+                        bestBid = h.getBid().max(bestBid);
+                    if (h.getAsk() != null)
+                        bestAsk = h.getAsk().min(bestAsk);
                 }
 
                 if (bestBid.compareTo(BigDecimal.ZERO) > 0
@@ -110,7 +114,7 @@ public class PriceService {
                     priceAggregate.setAsk(bestAsk);
                     priceAggregate.setTimestamp(now);
                     priceAggregateRepository.save(priceAggregate);
-                    log.info("Saved price for {}: Bid={}, Ask={}", pair, bestBid, bestAsk);
+//                    log.info("Saved price for {}: Bid={}, Ask={}", pair, bestBid, bestAsk);
                 }
             }
 
