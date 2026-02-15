@@ -1,5 +1,7 @@
 package com.hoang.crypto.service;
 
+import com.hoang.crypto.constant.CryptoPair;
+import com.hoang.crypto.constant.Currency;
 import com.hoang.crypto.entity.PriceAggregate;
 import com.hoang.crypto.entity.Transaction;
 import com.hoang.crypto.entity.User;
@@ -15,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -36,19 +39,19 @@ public class TradingService {
 
             Wallet wallet = new Wallet();
             wallet.setUser(user);
-            wallet.setCurrency("USDT");
+            wallet.setCurrency(Currency.USDT);
             wallet.setBalance(new BigDecimal("50000"));
             walletRepository.save(wallet);
 
             Wallet walletBTC = new Wallet();
             walletBTC.setUser(user);
-            walletBTC.setCurrency("BTC");
+            walletBTC.setCurrency(Currency.BTC);
             walletBTC.setBalance(new BigDecimal("0"));
             walletRepository.save(walletBTC);
 
             Wallet walletETH = new Wallet();
             walletETH.setUser(user);
-            walletETH.setCurrency("ETH");
+            walletETH.setCurrency(Currency.ETH);
             walletETH.setBalance(new BigDecimal("0"));
             walletRepository.save(walletETH);
 
@@ -57,15 +60,16 @@ public class TradingService {
     }
 
     @Transactional
-    public Transaction executeTrade(Long userId, String pair, String type, BigDecimal amount) {
+    public Transaction executeTrade(Long userId, CryptoPair pair, String type, BigDecimal amount) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         PriceAggregate latestPrice = priceService.getLatestPrice(pair);
         if (latestPrice == null) {
             throw new RuntimeException("No price available for " + pair);
         }
 
-        String baseCurrency = pair.replace("USDT", ""); // ETH, BTC
-        String quoteCurrency = "USDT";
+        String baseCurrencyStr = pair.name().replace("USDT", ""); // ETH, BTC
+        Currency baseCurrency = Currency.valueOf(baseCurrencyStr);
+        Currency quoteCurrency = Currency.USDT;
 
         if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
             throw new RuntimeException("Invalid trade amount");
@@ -133,5 +137,13 @@ public class TradingService {
         transaction.setAmount(amount);
         transaction.setTimestamp(LocalDateTime.now());
         return transactionRepository.save(transaction);
+    }
+
+    public List<Wallet> getWalletBalance(Long userId) {
+        return walletRepository.findByUserId(userId);
+    }
+
+    public List<Transaction> getTransactionHistory(Long userId) {
+        return transactionRepository.findByUserId(userId);
     }
 }

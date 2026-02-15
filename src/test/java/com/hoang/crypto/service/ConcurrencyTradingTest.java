@@ -1,5 +1,7 @@
 package com.hoang.crypto.service;
 
+import com.hoang.crypto.constant.CryptoPair;
+import com.hoang.crypto.constant.Currency;
 import com.hoang.crypto.entity.PriceAggregate;
 import com.hoang.crypto.entity.User;
 import com.hoang.crypto.entity.Wallet;
@@ -47,13 +49,13 @@ public class ConcurrencyTradingTest {
         // Add initial balance
         Wallet wallet = new Wallet();
         wallet.setUser(user);
-        wallet.setCurrency("USDT");
+        wallet.setCurrency(Currency.USDT);
         wallet.setBalance(new BigDecimal("100000"));
         walletRepository.save(wallet);
 
         // Add a fixed price for testing
         PriceAggregate price = new PriceAggregate();
-        price.setPair("ETHUSDT");
+        price.setPair(CryptoPair.ETHUSDT);
         price.setBid(new BigDecimal("2000"));
         price.setAsk(new BigDecimal("2100"));
         price.setTimestamp(LocalDateTime.now());
@@ -75,7 +77,7 @@ public class ConcurrencyTradingTest {
             executor.submit(() -> {
                 try {
                     startLatch.await();
-                    tradingService.executeTrade(testUserId, "ETHUSDT", "BUY", tradeAmount);
+                    tradingService.executeTrade(testUserId, CryptoPair.ETHUSDT, "BUY", tradeAmount);
                 } catch (Exception e) {
                     System.err.println("Trade failed: " + e.getMessage());
                 } finally {
@@ -89,7 +91,7 @@ public class ConcurrencyTradingTest {
         executor.shutdown();
 
         // Verify final USDT balance
-        Wallet usdtWallet = walletRepository.findByUserIdAndCurrency(testUserId, "USDT").orElseThrow();
+        Wallet usdtWallet = walletRepository.findByUserIdAndCurrency(testUserId, Currency.USDT).orElseThrow();
         BigDecimal expectedBalance = new BigDecimal("100000").subtract(totalCost);
 
         // Use compareTo for BigDecimal equality check
@@ -97,7 +99,7 @@ public class ConcurrencyTradingTest {
                 "Balance mismatch! Expected: " + expectedBalance + " but got: " + usdtWallet.getBalance());
 
         // Verify ETH balance
-        Wallet ethWallet = walletRepository.findByUserIdAndCurrency(testUserId, "ETH").orElseThrow();
+        Wallet ethWallet = walletRepository.findByUserIdAndCurrency(testUserId, Currency.ETH).orElseThrow();
         assertEquals(0, new BigDecimal(threadCount).compareTo(ethWallet.getBalance()));
     }
 }

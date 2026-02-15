@@ -1,5 +1,7 @@
 package com.hoang.crypto.service;
 
+import com.hoang.crypto.constant.CryptoPair;
+import com.hoang.crypto.constant.Currency;
 import com.hoang.crypto.entity.PriceAggregate;
 import com.hoang.crypto.entity.Transaction;
 import com.hoang.crypto.entity.User;
@@ -19,9 +21,13 @@ import org.mockito.quality.Strictness;
 import java.math.BigDecimal;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.*;
-import static org.mockito.Mockito.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
@@ -49,7 +55,7 @@ class TradingServiceTest {
         testUser.setUsername("testuser");
 
         ethPrice = new PriceAggregate();
-        ethPrice.setPair("ETHUSDT");
+        ethPrice.setPair(CryptoPair.ETHUSDT);
         ethPrice.setBid(new BigDecimal("2000"));
         ethPrice.setAsk(new BigDecimal("2100"));
     }
@@ -58,19 +64,19 @@ class TradingServiceTest {
     void executeTrade_SuccessfulBuy() {
         // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(priceService.getLatestPrice("ETHUSDT")).thenReturn(ethPrice);
+        when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(ethPrice);
 
         Wallet usdtWallet = new Wallet();
-        usdtWallet.setCurrency("USDT");
+        usdtWallet.setCurrency(Currency.USDT);
         usdtWallet.setBalance(new BigDecimal("5000"));
-        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, "USDT")).thenReturn(Optional.of(usdtWallet));
+        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, Currency.USDT)).thenReturn(Optional.of(usdtWallet));
 
-        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, "ETH")).thenReturn(Optional.empty());
+        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, Currency.ETH)).thenReturn(Optional.empty());
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> i.getArguments()[0]);
 
         // Act
         BigDecimal amount = new BigDecimal("1");
-        Transaction result = tradingService.executeTrade(1L, "ETHUSDT", "BUY", amount);
+        Transaction result = tradingService.executeTrade(1L, CryptoPair.ETHUSDT, "BUY", amount);
 
         // Assert
         assertNotNull(result);
@@ -84,22 +90,22 @@ class TradingServiceTest {
     void executeTrade_SuccessfulSell() {
         // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(priceService.getLatestPrice("ETHUSDT")).thenReturn(ethPrice);
+        when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(ethPrice);
 
         Wallet ethWallet = new Wallet();
-        ethWallet.setCurrency("ETH");
+        ethWallet.setCurrency(Currency.ETH);
         ethWallet.setBalance(new BigDecimal("2"));
-        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, "ETH")).thenReturn(Optional.of(ethWallet));
+        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, Currency.ETH)).thenReturn(Optional.of(ethWallet));
 
         Wallet usdtWallet = new Wallet();
-        usdtWallet.setCurrency("USDT");
+        usdtWallet.setCurrency(Currency.USDT);
         usdtWallet.setBalance(new BigDecimal("100"));
-        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, "USDT")).thenReturn(Optional.of(usdtWallet));
+        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, Currency.USDT)).thenReturn(Optional.of(usdtWallet));
 
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> i.getArguments()[0]);
 
         // Act
-        Transaction result = tradingService.executeTrade(1L, "ETHUSDT", "SELL", new BigDecimal("1"));
+        Transaction result = tradingService.executeTrade(1L, CryptoPair.ETHUSDT, "SELL", new BigDecimal("1"));
 
         // Assert
         assertNotNull(result);
@@ -114,16 +120,16 @@ class TradingServiceTest {
     void executeTrade_InsufficientFundsBuy() {
         // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(priceService.getLatestPrice("ETHUSDT")).thenReturn(ethPrice);
+        when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(ethPrice);
 
         Wallet usdtWallet = new Wallet();
-        usdtWallet.setCurrency("USDT");
+        usdtWallet.setCurrency(Currency.USDT);
         usdtWallet.setBalance(new BigDecimal("1000"));
-        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, "USDT")).thenReturn(Optional.of(usdtWallet));
+        when(walletRepository.findByUserIdAndCurrencyWithLock(1L, Currency.USDT)).thenReturn(Optional.of(usdtWallet));
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(1L, "ETHUSDT", "BUY", new BigDecimal("1")));
+                () -> tradingService.executeTrade(1L, CryptoPair.ETHUSDT, "BUY", new BigDecimal("1")));
         assertEquals("Insufficient balance", exception.getMessage());
     }
 
@@ -131,15 +137,15 @@ class TradingServiceTest {
     void executeTrade_InvalidAmount() {
         // Arrange - Need these because they are called before amount validation
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(priceService.getLatestPrice("ETHUSDT")).thenReturn(ethPrice);
+        when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(ethPrice);
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(1L, "ETHUSDT", "BUY", null));
+                () -> tradingService.executeTrade(1L, CryptoPair.ETHUSDT, "BUY", null));
         assertEquals("Invalid trade amount", exception.getMessage());
 
         RuntimeException exception2 = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(1L, "ETHUSDT", "BUY", new BigDecimal("-1")));
+                () -> tradingService.executeTrade(1L, CryptoPair.ETHUSDT, "BUY", new BigDecimal("-1")));
         assertEquals("Invalid trade amount", exception2.getMessage());
     }
 
@@ -147,11 +153,11 @@ class TradingServiceTest {
     void executeTrade_MissingPrice() {
         // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
-        when(priceService.getLatestPrice("ETHUSDT")).thenReturn(null);
+        when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(null);
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(1L, "ETHUSDT", "BUY", new BigDecimal("1")));
+                () -> tradingService.executeTrade(1L, CryptoPair.ETHUSDT, "BUY", new BigDecimal("1")));
         assertEquals("No price available for ETHUSDT", exception.getMessage());
     }
 
@@ -162,7 +168,7 @@ class TradingServiceTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(99L, "ETHUSDT", "BUY", new BigDecimal("1")));
+                () -> tradingService.executeTrade(99L, CryptoPair.ETHUSDT, "BUY", new BigDecimal("1")));
         assertEquals("User not found", exception.getMessage());
     }
 }
