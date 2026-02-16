@@ -14,6 +14,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.ConsumptionProbe;
+import org.junit.jupiter.api.BeforeEach;
+import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -22,6 +26,7 @@ import java.util.List;
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -42,6 +47,24 @@ class CryptoControllerTest {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @MockitoBean
+    @Qualifier("priceLimitBucket")
+    private Bucket priceLimitBucket;
+
+    @MockitoBean
+    @Qualifier("tradeLimitBucket")
+    private Bucket tradeLimitBucket;
+
+    @BeforeEach
+    void setUp() {
+        ConsumptionProbe probe = mock(ConsumptionProbe.class);
+        when(probe.isConsumed()).thenReturn(true);
+        when(probe.getRemainingTokens()).thenReturn(10L);
+
+        when(priceLimitBucket.tryConsumeAndReturnRemaining(1)).thenReturn(probe);
+        when(tradeLimitBucket.tryConsumeAndReturnRemaining(1)).thenReturn(probe);
+    }
 
     @Test
     void getLatestPrice_Success() throws Exception {
