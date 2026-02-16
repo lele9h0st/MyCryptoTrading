@@ -18,6 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -60,7 +61,7 @@ public class TradingService {
     }
 
     @Transactional
-    public Transaction executeTrade(Long userId, CryptoPair pair, String type, BigDecimal amount) {
+    public Transaction executeTrade(UUID userId, CryptoPair pair, String type, BigDecimal amount) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         PriceAggregate latestPrice = priceService.getLatestPrice(pair);
         if (latestPrice == null) {
@@ -139,11 +140,11 @@ public class TradingService {
         return transactionRepository.save(transaction);
     }
 
-    public List<Wallet> getWalletBalance(Long userId) {
+    public List<Wallet> getWalletBalance(UUID userId) {
         return walletRepository.findByUserId(userId);
     }
 
-    public List<Transaction> getTransactionHistory(Long userId) {
+    public List<Transaction> getTransactionHistory(UUID userId) {
         return transactionRepository.findByUserId(userId);
     }
 }

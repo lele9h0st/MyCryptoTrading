@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
@@ -86,8 +87,9 @@ class CryptoControllerTest {
 
     @Test
     void executeTrade_Success() throws Exception {
+        UUID userId = UUID.randomUUID();
         CryptoController.TradeRequest request = new CryptoController.TradeRequest();
-        request.setUserId(1L);
+        request.setUserId(userId);
         request.setPair(CryptoPair.ETHUSDT);
         request.setType("BUY");
         request.setAmount(new BigDecimal("1"));
@@ -99,7 +101,7 @@ class CryptoControllerTest {
         transaction.setAmount(new BigDecimal("1"));
         transaction.setTimestamp(LocalDateTime.now());
 
-        when(tradingService.executeTrade(eq(1L), eq(CryptoPair.ETHUSDT), eq("BUY"), any(BigDecimal.class)))
+        when(tradingService.executeTrade(eq(userId), eq(CryptoPair.ETHUSDT), eq("BUY"), any(BigDecimal.class)))
                 .thenReturn(transaction);
 
         mockMvc.perform(post("/api/crypto/trade")
@@ -114,13 +116,14 @@ class CryptoControllerTest {
 
     @Test
     void getWalletBalance_Success() throws Exception {
+        UUID userId = UUID.randomUUID();
         Wallet wallet = new Wallet();
         wallet.setCurrency(Currency.USDT);
         wallet.setBalance(new BigDecimal("5000"));
 
-        when(tradingService.getWalletBalance(1L)).thenReturn(List.of(wallet));
+        when(tradingService.getWalletBalance(userId)).thenReturn(List.of(wallet));
 
-        mockMvc.perform(get("/api/crypto/wallet/balance?userId=1"))
+        mockMvc.perform(get("/api/crypto/wallet/balance?userId=" + userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].currency").value("USDT"))
@@ -130,15 +133,16 @@ class CryptoControllerTest {
 
     @Test
     void getTransactionHistory_Success() throws Exception {
+        UUID userId = UUID.randomUUID();
         Transaction transaction = new Transaction();
         transaction.setPair(CryptoPair.ETHUSDT);
         transaction.setType("BUY");
         transaction.setPrice(new BigDecimal("2100"));
         transaction.setAmount(new BigDecimal("1"));
 
-        when(tradingService.getTransactionHistory(1L)).thenReturn(List.of(transaction));
+        when(tradingService.getTransactionHistory(userId)).thenReturn(List.of(transaction));
 
-        mockMvc.perform(get("/api/crypto/history?userId=1"))
+        mockMvc.perform(get("/api/crypto/history?userId=" + userId))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].pair").value("ETHUSDT"))

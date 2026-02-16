@@ -9,13 +9,14 @@ import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
-public interface WalletRepository extends JpaRepository<Wallet, Long> {
-    List<Wallet> findByUserId(Long userId);
+public interface WalletRepository extends JpaRepository<Wallet, UUID> {
+    List<Wallet> findByUserId(UUID userId);
 
-    Optional<Wallet> findByUserIdAndCurrency(Long userId, Currency currency);
+    Optional<Wallet> findByUserIdAndCurrency(UUID userId, Currency currency);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT w FROM Wallet w WHERE w.user.id = :userId AND w.currency = :currency")
-    Optional<Wallet> findByUserIdAndCurrencyWithLock(Long userId, Currency currency);
+    Optional<Wallet> findByUserIdAndCurrencyWithLock(UUID userId, Currency currency);
 }

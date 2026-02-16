@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -36,7 +37,7 @@ public class ConcurrencyTradingTest {
     @Autowired
     private PriceAggregateRepository priceAggregateRepository;
 
-    private Long testUserId;
+    private UUID testUserId;
 
     @BeforeEach
     void setUp() {

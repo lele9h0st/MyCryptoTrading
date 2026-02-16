@@ -18,6 +18,7 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -43,7 +44,7 @@ public class RateLimitIntegrationTest {
     @Autowired
     private TransactionRepository transactionRepository;
 
-    private Long testUserId;
+    private UUID testUserId;
 
     @BeforeEach
     public void setup() {
@@ -86,7 +87,8 @@ public class RateLimitIntegrationTest {
     @Test
     public void testTradeEndpointRateLimit() throws Exception {
         String jsonRequest = String
-                .format("{\"userId\": %d, \"pair\": \"BTCUSDT\", \"type\": \"BUY\", \"amount\": 0.001}", testUserId);
+                .format("{\"userId\": \"%s\", \"pair\": \"BTCUSDT\", \"type\": \"BUY\", \"amount\": 0.001}",
+                        testUserId);
 
         for (int i = 0; i < 30; i++) {
             mockMvc.perform(post("/api/crypto/trade")
