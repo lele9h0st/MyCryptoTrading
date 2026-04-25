@@ -87,9 +87,8 @@ class CryptoControllerTest {
 
     @Test
     void executeTrade_Success() throws Exception {
-        UUID userId = UUID.randomUUID();
         CryptoController.TradeRequest request = new CryptoController.TradeRequest();
-        request.setUserId(userId);
+        request.setUserId(1L);
         request.setPair(CryptoPair.ETHUSDT);
         request.setType("BUY");
         request.setAmount(new BigDecimal("1"));
@@ -101,7 +100,7 @@ class CryptoControllerTest {
         transaction.setAmount(new BigDecimal("1"));
         transaction.setTimestamp(LocalDateTime.now());
 
-        when(tradingService.executeTrade(eq(userId), eq(CryptoPair.ETHUSDT), eq("BUY"), any(BigDecimal.class)))
+        when(tradingService.executeTrade(eq(1L), eq(CryptoPair.ETHUSDT), eq("BUY"), any(BigDecimal.class)))
                 .thenReturn(transaction);
 
         mockMvc.perform(post("/api/crypto/trade")
@@ -116,7 +115,7 @@ class CryptoControllerTest {
 
     @Test
     void getWalletBalance_Success() throws Exception {
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         Wallet wallet = new Wallet();
         wallet.setCurrency(Currency.USDT);
         wallet.setBalance(new BigDecimal("5000"));
@@ -133,7 +132,7 @@ class CryptoControllerTest {
 
     @Test
     void getTransactionHistory_Success() throws Exception {
-        UUID userId = UUID.randomUUID();
+        Long userId = 1L;
         Transaction transaction = new Transaction();
         transaction.setPair(CryptoPair.ETHUSDT);
         transaction.setType("BUY");

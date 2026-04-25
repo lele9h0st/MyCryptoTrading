@@ -20,7 +20,6 @@ import org.mockito.quality.Strictness;
 
 import java.math.BigDecimal;
 import java.util.Optional;
-import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -47,12 +46,12 @@ class TradingServiceTest {
     private TradingService tradingService;
 
     private User testUser;
-    private UUID testUserId;
+    private Long testUserId;
     private PriceAggregate ethPrice;
 
     @BeforeEach
     void setUp() {
-        testUserId = UUID.randomUUID();
+        testUserId = 1L;
         testUser = new User();
         testUser.setId(testUserId);
         testUser.setUsername("testuser");
@@ -171,7 +170,7 @@ class TradingServiceTest {
     @Test
     void executeTrade_UserNotFound() {
         // Arrange
-        UUID unknownUserId = UUID.randomUUID();
+        Long unknownUserId = 2L;
         when(userRepository.findById(unknownUserId)).thenReturn(Optional.empty());
 
         // Act & Assert

@@ -9,7 +9,6 @@ import com.hoang.crypto.entity.Wallet;
 import com.hoang.crypto.repository.TransactionRepository;
 import com.hoang.crypto.repository.UserRepository;
 import com.hoang.crypto.repository.WalletRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,7 +17,6 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -30,38 +28,8 @@ public class TradingService {
     private final TransactionRepository transactionRepository;
     private final PriceService priceService;
 
-    @PostConstruct
-    public void init() {
-        // Seed data
-        if (userRepository.count() == 0) {
-            User user = new User();
-            user.setUsername("testuser");
-            userRepository.save(user);
-
-            Wallet wallet = new Wallet();
-            wallet.setUser(user);
-            wallet.setCurrency(Currency.USDT);
-            wallet.setBalance(new BigDecimal("50000"));
-            walletRepository.save(wallet);
-
-            Wallet walletBTC = new Wallet();
-            walletBTC.setUser(user);
-            walletBTC.setCurrency(Currency.BTC);
-            walletBTC.setBalance(new BigDecimal("0"));
-            walletRepository.save(walletBTC);
-
-            Wallet walletETH = new Wallet();
-            walletETH.setUser(user);
-            walletETH.setCurrency(Currency.ETH);
-            walletETH.setBalance(new BigDecimal("0"));
-            walletRepository.save(walletETH);
-
-            log.info("Seeded user with 50,000 USDT");
-        }
-    }
-
     @Transactional
-    public Transaction executeTrade(UUID userId, CryptoPair pair, String type, BigDecimal amount) {
+    public Transaction executeTrade(Long userId, CryptoPair pair, String type, BigDecimal amount) {
         User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
         PriceAggregate latestPrice = priceService.getLatestPrice(pair);
         if (latestPrice == null) {
@@ -140,11 +108,11 @@ public class TradingService {
         return transactionRepository.save(transaction);
     }
 
-    public List<Wallet> getWalletBalance(UUID userId) {
+    public List<Wallet> getWalletBalance(Long userId) {
         return walletRepository.findByUserId(userId);
     }
 
-    public List<Transaction> getTransactionHistory(UUID userId) {
+    public List<Transaction> getTransactionHistory(Long userId) {
         return transactionRepository.findByUserId(userId);
     }
 }

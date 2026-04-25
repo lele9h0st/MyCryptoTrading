@@ -22,11 +22,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/crypto")
+@RequestMapping("/crypto")
 @RequiredArgsConstructor
 public class CryptoController {
 
@@ -57,7 +56,7 @@ public class CryptoController {
     }
 
     @GetMapping("/wallet/balance")
-    public ResponseEntity<List<WalletDto>> getWalletBalance(@RequestParam UUID userId) {
+    public ResponseEntity<List<WalletDto>> getWalletBalance(@RequestParam Long userId) {
         List<Wallet> wallets = tradingService.getWalletBalance(userId);
         List<WalletDto> dtos = wallets.stream()
                 .map(WalletDto::fromEntity)
@@ -66,7 +65,7 @@ public class CryptoController {
     }
 
     @GetMapping("/history")
-    public ResponseEntity<List<TransactionDto>> getTransactionHistory(@RequestParam UUID userId) {
+    public ResponseEntity<List<TransactionDto>> getTransactionHistory(@RequestParam Long userId) {
         List<Transaction> transactions = tradingService.getTransactionHistory(userId);
         List<TransactionDto> dtos = transactions.stream()
                 .map(TransactionDto::fromEntity)
@@ -76,7 +75,7 @@ public class CryptoController {
 
     @Data
     static class TradeRequest {
-        private UUID userId;
+        private Long userId;
         private CryptoPair pair;
         private String type; // BUY, SELL
         private BigDecimal amount;
