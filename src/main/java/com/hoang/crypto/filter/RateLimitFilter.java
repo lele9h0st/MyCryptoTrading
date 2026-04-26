@@ -33,9 +33,9 @@ public class RateLimitFilter extends OncePerRequestFilter {
         String path = request.getRequestURI();
         Bucket bucket = null;
 
-        if (path.startsWith("/api/crypto/price/latest")) {
+        if (path.startsWith("/crypto/price/latest")) {
             bucket = priceLimitBucket;
-        } else if (path.startsWith("/api/crypto/trade")) {
+        } else if (path.startsWith("/crypto/trade")) {
             bucket = tradeLimitBucket;
         }
 

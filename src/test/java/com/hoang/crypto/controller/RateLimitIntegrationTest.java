@@ -14,11 +14,11 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.security.test.context.support.WithMockUser;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -44,7 +44,7 @@ public class RateLimitIntegrationTest {
     @Autowired
     private TransactionRepository transactionRepository;
 
-    private UUID testUserId;
+    private Long testUserId;
 
     @BeforeEach
     public void setup() {
@@ -55,8 +55,11 @@ public class RateLimitIntegrationTest {
 
         User user = new User();
         user.setUsername("ratelimit-testuser");
+        user.setEmail("ratelimit-test@example.com");
+        user.setPassword("password");
         user = userRepository.save(user);
         testUserId = user.getId();
+
 
         Wallet wallet = new Wallet();
         wallet.setUser(user);
@@ -73,31 +76,33 @@ public class RateLimitIntegrationTest {
     }
 
     @Test
+    @WithMockUser(username = "ratelimit-testuser")
     public void testPriceEndpointRateLimit() throws Exception {
         for (int i = 0; i < 30; i++) {
-            mockMvc.perform(get("/api/crypto/price/latest").param("pair", "BTCUSDT"))
+            mockMvc.perform(get("/crypto/price/latest").param("pair", "BTCUSDT"))
                     .andExpect(status().isOk());
         }
 
-        mockMvc.perform(get("/api/crypto/price/latest").param("pair", "BTCUSDT"))
+        mockMvc.perform(get("/crypto/price/latest").param("pair", "BTCUSDT"))
                 .andExpect(status().isTooManyRequests())
                 .andExpect(header().exists("X-Rate-Limit-Retry-After-Seconds"));
     }
 
     @Test
+    @WithMockUser(username = "ratelimit-testuser")
     public void testTradeEndpointRateLimit() throws Exception {
         String jsonRequest = String
                 .format("{\"userId\": \"%s\", \"pair\": \"BTCUSDT\", \"type\": \"BUY\", \"amount\": 0.001}",
                         testUserId);
 
         for (int i = 0; i < 30; i++) {
-            mockMvc.perform(post("/api/crypto/trade")
+            mockMvc.perform(post("/crypto/trade")
                     .contentType("application/json")
                     .content(jsonRequest))
                     .andExpect(status().isOk());
         }
 
-        mockMvc.perform(post("/api/crypto/trade")
+        mockMvc.perform(post("/crypto/trade")
                 .contentType("application/json")
                 .content(jsonRequest))
                 .andExpect(status().isTooManyRequests());

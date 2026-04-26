@@ -5,12 +5,11 @@ import com.hoang.crypto.dto.PriceAggregateDto;
 import com.hoang.crypto.dto.TransactionDto;
 import com.hoang.crypto.dto.WalletDto;
 import com.hoang.crypto.entity.PriceAggregate;
+import com.hoang.crypto.entity.TradeRequest;
 import com.hoang.crypto.entity.Transaction;
 import com.hoang.crypto.entity.Wallet;
-import com.hoang.crypto.exception.InvalidInputException;
 import com.hoang.crypto.service.PriceService;
 import com.hoang.crypto.service.TradingService;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -20,13 +19,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.math.BigDecimal;
 import java.util.List;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/crypto")
+@RequestMapping("/crypto")
 @RequiredArgsConstructor
 public class CryptoController {
 
@@ -44,21 +41,16 @@ public class CryptoController {
 
     @PostMapping("/trade")
     public ResponseEntity<TransactionDto> executeTrade(@RequestBody TradeRequest request) {
-        try {
             Transaction transaction = tradingService.executeTrade(
-                    request.getUserId(),
                     request.getPair(),
                     request.getType(),
                     request.getAmount());
             return ResponseEntity.ok(TransactionDto.fromEntity(transaction));
-        } catch (Exception e) {
-            throw new InvalidInputException(e.getMessage());
-        }
     }
 
     @GetMapping("/wallet/balance")
-    public ResponseEntity<List<WalletDto>> getWalletBalance(@RequestParam UUID userId) {
-        List<Wallet> wallets = tradingService.getWalletBalance(userId);
+    public ResponseEntity<List<WalletDto>> getWalletBalance() {
+        List<Wallet> wallets = tradingService.getWalletBalance();
         List<WalletDto> dtos = wallets.stream()
                 .map(WalletDto::fromEntity)
                 .collect(Collectors.toList());
@@ -66,19 +58,11 @@ public class CryptoController {
     }
 
     @GetMapping("/history")
-    public ResponseEntity<List<TransactionDto>> getTransactionHistory(@RequestParam UUID userId) {
-        List<Transaction> transactions = tradingService.getTransactionHistory(userId);
+    public ResponseEntity<List<TransactionDto>> getTransactionHistory() {
+        List<Transaction> transactions = tradingService.getTransactionHistory();
         List<TransactionDto> dtos = transactions.stream()
                 .map(TransactionDto::fromEntity)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(dtos);
-    }
-
-    @Data
-    static class TradeRequest {
-        private UUID userId;
-        private CryptoPair pair;
-        private String type; // BUY, SELL
-        private BigDecimal amount;
     }
 }

@@ -7,9 +7,7 @@ import com.hoang.crypto.entity.Transaction;
 import com.hoang.crypto.entity.User;
 import com.hoang.crypto.entity.Wallet;
 import com.hoang.crypto.repository.TransactionRepository;
-import com.hoang.crypto.repository.UserRepository;
 import com.hoang.crypto.repository.WalletRepository;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -18,51 +16,21 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
 public class TradingService {
 
-    private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final PriceService priceService;
-
-    @PostConstruct
-    public void init() {
-        // Seed data
-        if (userRepository.count() == 0) {
-            User user = new User();
-            user.setUsername("testuser");
-            userRepository.save(user);
-
-            Wallet wallet = new Wallet();
-            wallet.setUser(user);
-            wallet.setCurrency(Currency.USDT);
-            wallet.setBalance(new BigDecimal("50000"));
-            walletRepository.save(wallet);
-
-            Wallet walletBTC = new Wallet();
-            walletBTC.setUser(user);
-            walletBTC.setCurrency(Currency.BTC);
-            walletBTC.setBalance(new BigDecimal("0"));
-            walletRepository.save(walletBTC);
-
-            Wallet walletETH = new Wallet();
-            walletETH.setUser(user);
-            walletETH.setCurrency(Currency.ETH);
-            walletETH.setBalance(new BigDecimal("0"));
-            walletRepository.save(walletETH);
-
-            log.info("Seeded user with 50,000 USDT");
-        }
-    }
+    private final UserService userService;
 
     @Transactional
-    public Transaction executeTrade(UUID userId, CryptoPair pair, String type, BigDecimal amount) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    public Transaction executeTrade(CryptoPair pair, String type, BigDecimal amount) {
+        User user = userService.checkAndGetUser();
+        Long userId = user.getId();
         PriceAggregate latestPrice = priceService.getLatestPrice(pair);
         if (latestPrice == null) {
             throw new RuntimeException("No price available for " + pair);
@@ -140,11 +108,13 @@ public class TradingService {
         return transactionRepository.save(transaction);
     }
 
-    public List<Wallet> getWalletBalance(UUID userId) {
-        return walletRepository.findByUserId(userId);
+    public List<Wallet> getWalletBalance() {
+        User user = userService.checkAndGetUser();
+        return walletRepository.findByUserId(user.getId());
     }
 
-    public List<Transaction> getTransactionHistory(UUID userId) {
-        return transactionRepository.findByUserId(userId);
+    public List<Transaction> getTransactionHistory() {
+        User user = userService.checkAndGetUser();
+        return transactionRepository.findByUserId(user.getId());
     }
 }
