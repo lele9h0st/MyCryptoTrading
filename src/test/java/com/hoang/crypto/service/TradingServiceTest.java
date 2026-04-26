@@ -41,6 +41,8 @@ class TradingServiceTest {
     private TransactionRepository transactionRepository;
     @Mock
     private PriceService priceService;
+    @Mock
+    private UserService userService;
 
     @InjectMocks
     private TradingService tradingService;
@@ -55,17 +57,20 @@ class TradingServiceTest {
         testUser = new User();
         testUser.setId(testUserId);
         testUser.setUsername("testuser");
+        testUser.setEmail("testuser@example.com");
 
         ethPrice = new PriceAggregate();
         ethPrice.setPair(CryptoPair.ETHUSDT);
         ethPrice.setBid(new BigDecimal("2000"));
         ethPrice.setAsk(new BigDecimal("2100"));
+
+        // Mock UserService to return the test user
+        when(userService.checkAndGetUser()).thenReturn(testUser);
     }
 
     @Test
     void executeTrade_SuccessfulBuy() {
         // Arrange
-        when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(ethPrice);
 
         Wallet usdtWallet = new Wallet();
@@ -92,7 +97,6 @@ class TradingServiceTest {
     @Test
     void executeTrade_SuccessfulSell() {
         // Arrange
-        when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(ethPrice);
 
         Wallet ethWallet = new Wallet();
@@ -124,7 +128,6 @@ class TradingServiceTest {
     @Test
     void executeTrade_InsufficientFundsBuy() {
         // Arrange
-        when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(ethPrice);
 
         Wallet usdtWallet = new Wallet();
@@ -142,7 +145,6 @@ class TradingServiceTest {
     @Test
     void executeTrade_InvalidAmount() {
         // Arrange - Need these because they are called before amount validation
-        when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(ethPrice);
 
         // Act & Assert
@@ -158,7 +160,6 @@ class TradingServiceTest {
     @Test
     void executeTrade_MissingPrice() {
         // Arrange
-        when(userRepository.findById(testUserId)).thenReturn(Optional.of(testUser));
         when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(null);
 
         // Act & Assert
@@ -170,8 +171,7 @@ class TradingServiceTest {
     @Test
     void executeTrade_UserNotFound() {
         // Arrange
-        Long unknownUserId = 2L;
-        when(userRepository.findById(unknownUserId)).thenReturn(Optional.empty());
+        when(userService.checkAndGetUser()).thenThrow(new RuntimeException("User not found"));
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,

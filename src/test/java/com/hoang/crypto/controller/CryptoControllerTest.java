@@ -9,16 +9,17 @@ import com.hoang.crypto.entity.Transaction;
 import com.hoang.crypto.entity.Wallet;
 import com.hoang.crypto.service.PriceService;
 import com.hoang.crypto.service.TradingService;
+import io.github.bucket4j.Bucket;
+import io.github.bucket4j.ConsumptionProbe;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
-import io.github.bucket4j.Bucket;
-import io.github.bucket4j.ConsumptionProbe;
-import org.junit.jupiter.api.BeforeEach;
-import org.springframework.beans.factory.annotation.Qualifier;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -35,6 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(CryptoController.class)
+@AutoConfigureMockMvc(addFilters = false)
 class CryptoControllerTest {
 
     @Autowired
@@ -57,6 +59,7 @@ class CryptoControllerTest {
     @Qualifier("tradeLimitBucket")
     private Bucket tradeLimitBucket;
 
+
     @BeforeEach
     void setUp() {
         ConsumptionProbe probe = mock(ConsumptionProbe.class);
@@ -77,7 +80,7 @@ class CryptoControllerTest {
 
         when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(price);
 
-        mockMvc.perform(get("/api/crypto/price/latest?pair=ETHUSDT"))
+        mockMvc.perform(get("/crypto/price/latest?pair=ETHUSDT"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.pair").value("ETHUSDT"))
                 .andExpect(jsonPath("$.bid").value(2000))
@@ -102,7 +105,7 @@ class CryptoControllerTest {
         when(tradingService.executeTrade(eq(CryptoPair.ETHUSDT), eq("BUY"), any(BigDecimal.class)))
                 .thenReturn(transaction);
 
-        mockMvc.perform(post("/api/crypto/trade")
+        mockMvc.perform(post("/crypto/trade")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
@@ -121,7 +124,7 @@ class CryptoControllerTest {
 
         when(tradingService.getWalletBalance()).thenReturn(List.of(wallet));
 
-        mockMvc.perform(get("/api/crypto/wallet/balance?userId=" + userId))
+        mockMvc.perform(get("/crypto/wallet/balance"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].currency").value("USDT"))
@@ -140,7 +143,7 @@ class CryptoControllerTest {
 
         when(tradingService.getTransactionHistory()).thenReturn(List.of(transaction));
 
-        mockMvc.perform(get("/api/crypto/history?userId=" + userId))
+        mockMvc.perform(get("/crypto/history"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].pair").value("ETHUSDT"))

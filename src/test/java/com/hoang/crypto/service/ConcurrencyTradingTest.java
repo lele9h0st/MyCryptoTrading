@@ -12,6 +12,12 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.mockito.Mockito;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -21,6 +27,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.mockito.Mockito.when;
 
 @SpringBootTest
 public class ConcurrencyTradingTest {
@@ -36,6 +43,12 @@ public class ConcurrencyTradingTest {
     @Autowired
     private PriceAggregateRepository priceAggregateRepository;
 
+    @MockitoBean
+    private UserService userService;
+
+    @MockitoBean
+    private PriceService priceService;
+
     private Long testUserId;
 
     @BeforeEach
@@ -43,8 +56,33 @@ public class ConcurrencyTradingTest {
         // Create a test user
         User user = new User();
         user.setUsername("concurrency_user_" + System.currentTimeMillis());
+        user.setEmail("concurrency_user_" + System.currentTimeMillis() + "@example.com");
+        user.setPassword("password");
         user = userRepository.save(user);
         testUserId = user.getId();
+
+        // Mock security context
+        UserDetails userDetails = Mockito.mock(UserDetails.class);
+        when(userDetails.getUsername()).thenReturn(user.getUsername());
+        
+        Authentication authentication = Mockito.mock(Authentication.class);
+        when(authentication.getPrincipal()).thenReturn(userDetails);
+        
+        SecurityContext securityContext = Mockito.mock(SecurityContext.class);
+        when(securityContext.getAuthentication()).thenReturn(authentication);
+        
+        SecurityContextHolder.setContext(securityContext);
+        
+        // Mock UserService to return the test user
+        when(userService.checkAndGetUser()).thenReturn(user);
+
+        // Mock PriceService to return fixed price
+        PriceAggregate fixedPrice = new PriceAggregate();
+        fixedPrice.setPair(CryptoPair.ETHUSDT);
+        fixedPrice.setBid(new BigDecimal("2000"));
+        fixedPrice.setAsk(new BigDecimal("2100"));
+        fixedPrice.setTimestamp(LocalDateTime.now());
+        when(priceService.getLatestPrice(CryptoPair.ETHUSDT)).thenReturn(fixedPrice);
 
         // Add initial balance
         Wallet wallet = new Wallet();
@@ -53,13 +91,6 @@ public class ConcurrencyTradingTest {
         wallet.setBalance(new BigDecimal("100000"));
         walletRepository.save(wallet);
 
-        // Add a fixed price for testing
-        PriceAggregate price = new PriceAggregate();
-        price.setPair(CryptoPair.ETHUSDT);
-        price.setBid(new BigDecimal("2000"));
-        price.setAsk(new BigDecimal("2100"));
-        price.setTimestamp(LocalDateTime.now());
-        priceAggregateRepository.save(price);
     }
 
     @Test
