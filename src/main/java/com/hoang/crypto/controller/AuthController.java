@@ -7,14 +7,17 @@ import com.hoang.crypto.dto.MessageResponse;
 import com.hoang.crypto.dto.SignupRequest;
 import com.hoang.crypto.dto.TokenRefreshRequest;
 import com.hoang.crypto.dto.TokenRefreshResponse;
+import com.hoang.crypto.constant.Currency;
 import com.hoang.crypto.entity.ERole;
 import com.hoang.crypto.entity.RefreshToken;
 import com.hoang.crypto.entity.Role;
 import com.hoang.crypto.entity.User;
+import com.hoang.crypto.entity.Wallet;
 import com.hoang.crypto.exception.TokenRefreshException;
 import com.hoang.crypto.jwt.JwtUtils;
 import com.hoang.crypto.repository.RoleRepository;
 import com.hoang.crypto.repository.UserRepository;
+import com.hoang.crypto.repository.WalletRepository;
 import com.hoang.crypto.service.RefreshTokenService;
 import com.hoang.crypto.service.UserDetailsImpl;
 import jakarta.validation.Valid;
@@ -33,6 +36,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.math.BigDecimal;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -55,6 +59,8 @@ public class AuthController {
     private final JwtUtils jwtUtils;
 
     private final RefreshTokenService refreshTokenService;
+
+    private final WalletRepository walletRepository;
 
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
@@ -132,6 +138,12 @@ public class AuthController {
 
         user.setRoles(roles);
         userRepository.save(user);
+
+        Wallet usdtWallet = new Wallet();
+        usdtWallet.setUser(user);
+        usdtWallet.setCurrency(Currency.USDT);
+        usdtWallet.setBalance(new BigDecimal("100"));
+        walletRepository.save(usdtWallet);
 
         return ResponseEntity.ok(new MessageResponse("User registered successfully!"));
     }

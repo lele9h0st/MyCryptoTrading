@@ -77,7 +77,7 @@ public class ConcurrencyTradingTest {
             executor.submit(() -> {
                 try {
                     startLatch.await();
-                    tradingService.executeTrade(testUserId, CryptoPair.ETHUSDT, "BUY", tradeAmount);
+                    tradingService.executeTrade(CryptoPair.ETHUSDT, "BUY", tradeAmount);
                 } catch (Exception e) {
                     System.err.println("Trade failed: " + e.getMessage());
                 } finally {

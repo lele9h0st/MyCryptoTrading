@@ -79,7 +79,7 @@ class TradingServiceTest {
 
         // Act
         BigDecimal amount = new BigDecimal("1");
-        Transaction result = tradingService.executeTrade(testUserId, CryptoPair.ETHUSDT, "BUY", amount);
+        Transaction result = tradingService.executeTrade( CryptoPair.ETHUSDT, "BUY", amount);
 
         // Assert
         assertNotNull(result);
@@ -110,7 +110,7 @@ class TradingServiceTest {
         when(transactionRepository.save(any(Transaction.class))).thenAnswer(i -> i.getArguments()[0]);
 
         // Act
-        Transaction result = tradingService.executeTrade(testUserId, CryptoPair.ETHUSDT, "SELL", new BigDecimal("1"));
+        Transaction result = tradingService.executeTrade(CryptoPair.ETHUSDT, "SELL", new BigDecimal("1"));
 
         // Assert
         assertNotNull(result);
@@ -135,7 +135,7 @@ class TradingServiceTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(testUserId, CryptoPair.ETHUSDT, "BUY", new BigDecimal("1")));
+                () -> tradingService.executeTrade(CryptoPair.ETHUSDT, "BUY", new BigDecimal("1")));
         assertEquals("Insufficient balance", exception.getMessage());
     }
 
@@ -147,11 +147,11 @@ class TradingServiceTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(testUserId, CryptoPair.ETHUSDT, "BUY", null));
+                () -> tradingService.executeTrade(CryptoPair.ETHUSDT, "BUY", null));
         assertEquals("Invalid trade amount", exception.getMessage());
 
         RuntimeException exception2 = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(testUserId, CryptoPair.ETHUSDT, "BUY", new BigDecimal("-1")));
+                () -> tradingService.executeTrade(CryptoPair.ETHUSDT, "BUY", new BigDecimal("-1")));
         assertEquals("Invalid trade amount", exception2.getMessage());
     }
 
@@ -163,7 +163,7 @@ class TradingServiceTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(testUserId, CryptoPair.ETHUSDT, "BUY", new BigDecimal("1")));
+                () -> tradingService.executeTrade(CryptoPair.ETHUSDT, "BUY", new BigDecimal("1")));
         assertEquals("No price available for ETHUSDT", exception.getMessage());
     }
 
@@ -175,7 +175,7 @@ class TradingServiceTest {
 
         // Act & Assert
         RuntimeException exception = assertThrows(RuntimeException.class,
-                () -> tradingService.executeTrade(unknownUserId, CryptoPair.ETHUSDT, "BUY", new BigDecimal("1")));
+                () -> tradingService.executeTrade(CryptoPair.ETHUSDT, "BUY", new BigDecimal("1")));
         assertEquals("User not found", exception.getMessage());
     }
 }

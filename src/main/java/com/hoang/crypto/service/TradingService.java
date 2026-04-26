@@ -7,7 +7,6 @@ import com.hoang.crypto.entity.Transaction;
 import com.hoang.crypto.entity.User;
 import com.hoang.crypto.entity.Wallet;
 import com.hoang.crypto.repository.TransactionRepository;
-import com.hoang.crypto.repository.UserRepository;
 import com.hoang.crypto.repository.WalletRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -23,14 +22,15 @@ import java.util.List;
 @Slf4j
 public class TradingService {
 
-    private final UserRepository userRepository;
     private final WalletRepository walletRepository;
     private final TransactionRepository transactionRepository;
     private final PriceService priceService;
+    private final UserService userService;
 
     @Transactional
-    public Transaction executeTrade(Long userId, CryptoPair pair, String type, BigDecimal amount) {
-        User user = userRepository.findById(userId).orElseThrow(() -> new RuntimeException("User not found"));
+    public Transaction executeTrade(CryptoPair pair, String type, BigDecimal amount) {
+        User user = userService.checkAndGetUser();
+        Long userId = user.getId();
         PriceAggregate latestPrice = priceService.getLatestPrice(pair);
         if (latestPrice == null) {
             throw new RuntimeException("No price available for " + pair);
@@ -108,11 +108,13 @@ public class TradingService {
         return transactionRepository.save(transaction);
     }
 
-    public List<Wallet> getWalletBalance(Long userId) {
-        return walletRepository.findByUserId(userId);
+    public List<Wallet> getWalletBalance() {
+        User user = userService.checkAndGetUser();
+        return walletRepository.findByUserId(user.getId());
     }
 
-    public List<Transaction> getTransactionHistory(Long userId) {
-        return transactionRepository.findByUserId(userId);
+    public List<Transaction> getTransactionHistory() {
+        User user = userService.checkAndGetUser();
+        return transactionRepository.findByUserId(user.getId());
     }
 }

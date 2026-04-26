@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.hoang.crypto.constant.CryptoPair;
 import com.hoang.crypto.constant.Currency;
 import com.hoang.crypto.entity.PriceAggregate;
+import com.hoang.crypto.entity.TradeRequest;
 import com.hoang.crypto.entity.Transaction;
 import com.hoang.crypto.entity.Wallet;
 import com.hoang.crypto.service.PriceService;
@@ -22,7 +23,6 @@ import org.springframework.beans.factory.annotation.Qualifier;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
@@ -87,8 +87,7 @@ class CryptoControllerTest {
 
     @Test
     void executeTrade_Success() throws Exception {
-        CryptoController.TradeRequest request = new CryptoController.TradeRequest();
-        request.setUserId(1L);
+        TradeRequest request = new TradeRequest();
         request.setPair(CryptoPair.ETHUSDT);
         request.setType("BUY");
         request.setAmount(new BigDecimal("1"));
@@ -100,7 +99,7 @@ class CryptoControllerTest {
         transaction.setAmount(new BigDecimal("1"));
         transaction.setTimestamp(LocalDateTime.now());
 
-        when(tradingService.executeTrade(eq(1L), eq(CryptoPair.ETHUSDT), eq("BUY"), any(BigDecimal.class)))
+        when(tradingService.executeTrade(eq(CryptoPair.ETHUSDT), eq("BUY"), any(BigDecimal.class)))
                 .thenReturn(transaction);
 
         mockMvc.perform(post("/api/crypto/trade")
@@ -120,7 +119,7 @@ class CryptoControllerTest {
         wallet.setCurrency(Currency.USDT);
         wallet.setBalance(new BigDecimal("5000"));
 
-        when(tradingService.getWalletBalance(userId)).thenReturn(List.of(wallet));
+        when(tradingService.getWalletBalance()).thenReturn(List.of(wallet));
 
         mockMvc.perform(get("/api/crypto/wallet/balance?userId=" + userId))
                 .andExpect(status().isOk())
@@ -139,7 +138,7 @@ class CryptoControllerTest {
         transaction.setPrice(new BigDecimal("2100"));
         transaction.setAmount(new BigDecimal("1"));
 
-        when(tradingService.getTransactionHistory(userId)).thenReturn(List.of(transaction));
+        when(tradingService.getTransactionHistory()).thenReturn(List.of(transaction));
 
         mockMvc.perform(get("/api/crypto/history?userId=" + userId))
                 .andExpect(status().isOk())
